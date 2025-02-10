@@ -5,6 +5,14 @@ from .schemas import BlogPostSchema, SubscriberSchema, CommentSchema
 
 api = Blueprint('api', __name__)
 
+@api.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "ok",
+        "message": "API is running"
+    }), 200
+
+
 # Esquemas
 blog_post_schema = BlogPostSchema()
 blog_posts_schema = BlogPostSchema(many=True)
@@ -12,9 +20,6 @@ subscriber_schema = SubscriberSchema()
 subscribers_schema = SubscriberSchema(many=True)
 comment_schema = CommentSchema()
 comments_schema = CommentSchema(many=True)
-
-
-# Ruta diagnóstico
 
 
 # Rutas para el blog
