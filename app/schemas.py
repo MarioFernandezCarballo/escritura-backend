@@ -1,21 +1,48 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from marshmallow import fields
-from .models import BlogPost, Subscriber, Comment
+from pydantic import BaseModel, EmailStr, Field
+from typing import List, Optional
+from datetime import datetime
 
+class CommentBase(BaseModel):
+    content: str
+    author: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class SubscriberSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Subscriber
-        load_instance = True
+class CommentCreate(CommentBase):
+    pass
 
-class CommentSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Comment
-        load_instance = True
+class Comment(CommentBase):
+    id: int
+    post_id: int
 
-class BlogPostSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = BlogPost
-        load_instance = True
+    class Config:
+        from_attributes = True
 
-    comments = fields.Nested(CommentSchema, many=True)  # Incluye los comentarios en el esquema
+class SubscriberBase(BaseModel):
+    email: EmailStr
+
+class SubscriberCreate(SubscriberBase):
+    pass
+
+class Subscriber(SubscriberBase):
+    id: int
+    subscribed_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        from_attributes = True
+
+class BlogPostBase(BaseModel):
+    title: str
+    content: str
+    tags: Optional[str] = None
+    image_url: Optional[str] = None
+
+class BlogPostCreate(BlogPostBase):
+    pass
+
+class BlogPost(BlogPostBase):
+    id: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    comments: List[Comment] = []
+
+    class Config:
+        from_attributes = True
