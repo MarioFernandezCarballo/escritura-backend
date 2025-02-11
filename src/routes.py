@@ -67,7 +67,7 @@ def add_comment(post_id):
 @api.route('/update_server', methods=['POST'])
 def webhook():
     if request.method == 'POST':
-        os.system('bash command-pull-event.sh')
+        os.system('bash /home/MarioCarballo/mysite/command-pull-event.sh')
         return 'Updated PythonAnywhere successfully', 200
     else:
         return 'Wrong event type', 400
