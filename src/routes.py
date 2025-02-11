@@ -23,6 +23,11 @@ def get_posts():
     posts = BlogPost.query.all()
     return jsonify([BlogPostSchema.model_validate(post).model_dump() for post in posts])
 
+@api.route('/blog/posts/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    post = BlogPost.query.get_or_404(post_id)
+    return jsonify(BlogPostSchema.model_validate(post).model_dump())
+
 # Authentication route
 @api.route('/auth/login', methods=['POST'])
 def login():
