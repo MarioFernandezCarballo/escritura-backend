@@ -4,7 +4,7 @@ from .models import BlogPost, Subscriber, Comment, Admin
 from .schemas import BlogPostCreate, BlogPost as BlogPostSchema
 from .schemas import SubscriberCreate, Subscriber as SubscriberSchema
 from .schemas import CommentCreate, Comment as CommentSchema
-from .schemas import AdminLogin, AdminCreate, TokenResponse
+from .schemas import AdminLogin, TokenResponse
 from .auth import create_access_token, admin_required
 import os
 
@@ -23,21 +23,7 @@ def get_posts():
     posts = BlogPost.query.all()
     return jsonify([BlogPostSchema.model_validate(post).model_dump() for post in posts])
 
-# Authentication routes
-@api.route('/auth/register', methods=['POST'])
-def register_admin():
-    admin_data = AdminCreate.model_validate(request.json)
-    if Admin.query.filter_by(username=admin_data.username).first():
-        return jsonify({"error": "Username already registered"}), 400
-    
-    new_admin = Admin(username=admin_data.username)
-    new_admin.set_password(admin_data.password)
-    db.session.add(new_admin)
-    db.session.commit()
-    
-    access_token = create_access_token({"sub": new_admin.username})
-    return jsonify(TokenResponse(access_token=access_token).model_dump())
-
+# Authentication route
 @api.route('/auth/login', methods=['POST'])
 def login():
     login_data = AdminLogin.model_validate(request.json)

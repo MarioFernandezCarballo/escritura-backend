@@ -6,9 +6,6 @@ class AdminLogin(BaseModel):
     username: constr(min_length=1)
     password: constr(min_length=6)
 
-class AdminCreate(AdminLogin):
-    pass
-
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
