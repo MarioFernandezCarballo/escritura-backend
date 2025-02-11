@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from . import db
-from .models import BlogPost, Subscriber, Comment
+from .models import BlogPost, Subscriber, Comment, Admin
 from .schemas import BlogPostCreate, BlogPost as BlogPostSchema
 from .schemas import SubscriberCreate, Subscriber as SubscriberSchema
 from .schemas import CommentCreate, Comment as CommentSchema
+from .schemas import AdminLogin, AdminCreate, TokenResponse
+from .auth import create_access_token, admin_required
 import os
 
 api = Blueprint('api', __name__)
@@ -21,7 +23,34 @@ def get_posts():
     posts = BlogPost.query.all()
     return jsonify([BlogPostSchema.model_validate(post).model_dump() for post in posts])
 
+# Authentication routes
+@api.route('/auth/register', methods=['POST'])
+def register_admin():
+    admin_data = AdminCreate.model_validate(request.json)
+    if Admin.query.filter_by(username=admin_data.username).first():
+        return jsonify({"error": "Username already registered"}), 400
+    
+    new_admin = Admin(username=admin_data.username)
+    new_admin.set_password(admin_data.password)
+    db.session.add(new_admin)
+    db.session.commit()
+    
+    access_token = create_access_token({"sub": new_admin.username})
+    return jsonify(TokenResponse(access_token=access_token).model_dump())
+
+@api.route('/auth/login', methods=['POST'])
+def login():
+    login_data = AdminLogin.model_validate(request.json)
+    admin = Admin.query.filter_by(username=login_data.username).first()
+    
+    if not admin or not admin.check_password(login_data.password):
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+    access_token = create_access_token({"sub": admin.username})
+    return jsonify(TokenResponse(access_token=access_token).model_dump())
+
 @api.route('/blog/posts', methods=['POST'])
+@admin_required
 def create_post():
     post_data = BlogPostCreate.model_validate(request.json)
     new_post = BlogPost(
