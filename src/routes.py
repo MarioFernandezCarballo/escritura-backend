@@ -101,7 +101,7 @@ def send_newsletter_now(newsletter_id):
     
     for subscriber in subscribers:
         resend.Emails.send({
-            "from": "Mario Carballo <newsletter@mariocarballo.com>",
+            "from": "Mario Carballo <developer@mariocarballo.com>",
             "to": subscriber.email,
             "subject": newsletter.subject,
             "html": newsletter.content
@@ -114,6 +114,7 @@ def send_newsletter_now(newsletter_id):
     return jsonify({"message": "Newsletter sent successfully"})
 
 @api.route('/mailing/subscribers', methods=['GET'])
+@admin_required
 def get_subscribers():
     subscribers = Subscriber.query.all()
     return jsonify([SubscriberSchema.model_validate(sub).model_dump() for sub in subscribers])
