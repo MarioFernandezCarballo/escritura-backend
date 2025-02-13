@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import schedule
 import time
 import threading
-from flask_mail import Mail, Message
+import resend
 from . import db
 from datetime import datetime
 from .models import BlogPost, Subscriber, Comment, Admin, Newsletter
@@ -14,6 +14,9 @@ from .auth import create_access_token, admin_required
 import os
 
 api = Blueprint('api', __name__)
+
+# Configuración de Resend
+resend.api_key = 're_2X64sqGS_6Zdn8rTiStRRWCBt76gPWr21'
 
 @api.route('/health', methods=['GET'])
 def health_check():
@@ -97,19 +100,19 @@ def send_newsletter_now(newsletter_id):
     subscribers = Subscriber.query.all()
     
     for subscriber in subscribers:
-        msg = Message(
-            newsletter.subject,
-            sender='your_email@example.com',
-            recipients=[subscriber.email]
-        )
-        msg.html = newsletter.content
-        mail.send(msg)
+        resend.Emails.send({
+            "from": "Mario Carballo <newsletter@mariocarballo.com>",
+            "to": subscriber.email,
+            "subject": newsletter.subject,
+            "html": newsletter.content
+        })
     
     newsletter.status = 'sent'
     newsletter.sent_at = datetime.utcnow()
     db.session.commit()
     
     return jsonify({"message": "Newsletter sent successfully"})
+
 @api.route('/mailing/subscribers', methods=['GET'])
 def get_subscribers():
     subscribers = Subscriber.query.all()
@@ -123,9 +126,6 @@ def add_subscriber():
     db.session.commit()
     return jsonify(SubscriberSchema.model_validate(new_subscriber).model_dump())
 
-# Configuración de correo
-mail = Mail()
-
 def send_scheduled_newsletters():
     current_time = datetime.utcnow()
     scheduled_newsletters = Newsletter.query.filter_by(status='scheduled').all()
@@ -134,13 +134,12 @@ def send_scheduled_newsletters():
         if newsletter.scheduled_for <= current_time:
             subscribers = Subscriber.query.all()
             for subscriber in subscribers:
-                msg = Message(
-                    newsletter.subject,
-                    sender='your_email@example.com',
-                    recipients=[subscriber.email]
-                )
-                msg.html = newsletter.content
-                mail.send(msg)
+                resend.Emails.send({
+                    "from": "Mario Carballo <newsletter@mariocarballo.com>",
+                    "to": subscriber.email,
+                    "subject": newsletter.subject,
+                    "html": newsletter.content
+                })
             
             newsletter.status = 'sent'
             newsletter.sent_at = current_time
@@ -166,7 +165,6 @@ def add_comment(post_id):
     db.session.add(new_comment)
     db.session.commit()
     return jsonify(CommentSchema.model_validate(new_comment).model_dump())
-
 
 # Rutas CICD
 @api.route('/update_server', methods=['POST'])
