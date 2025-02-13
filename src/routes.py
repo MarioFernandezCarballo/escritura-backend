@@ -101,7 +101,7 @@ def send_newsletter_now(newsletter_id):
     
     for subscriber in subscribers:
         resend.Emails.send({
-            "from": "Mario Carballo <developer@mariocarballo.com>",
+            "from": "Mario Carballo <developer@mariocarballo.es>",
             "to": subscriber.email,
             "subject": newsletter.subject,
             "html": newsletter.content
