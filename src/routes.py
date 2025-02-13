@@ -136,7 +136,7 @@ def send_scheduled_newsletters():
             subscribers = Subscriber.query.all()
             for subscriber in subscribers:
                 resend.Emails.send({
-                    "from": "Mario Carballo <newsletter@mariocarballo.com>",
+                    "from": "Mario Carballo <developer@mariocarballo.es>",
                     "to": subscriber.email,
                     "subject": newsletter.subject,
                     "html": newsletter.content
