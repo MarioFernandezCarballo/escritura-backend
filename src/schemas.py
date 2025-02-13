@@ -2,6 +2,23 @@ from pydantic import BaseModel, EmailStr, Field, constr
 from typing import List, Optional
 from datetime import datetime
 
+class NewsletterBase(BaseModel):
+    subject: str
+    content: str
+    scheduled_for: datetime
+
+class NewsletterCreate(NewsletterBase):
+    pass
+
+class Newsletter(NewsletterBase):
+    id: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    sent_at: Optional[datetime] = None
+    status: str = 'scheduled'
+
+    class Config:
+        from_attributes = True
+
 class AdminLogin(BaseModel):
     username: constr(min_length=1)
     password: constr(min_length=6)

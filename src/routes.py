@@ -1,10 +1,15 @@
 from flask import Blueprint, request, jsonify
+import schedule
+import time
+import threading
+from flask_mail import Mail, Message
 from . import db
-from .models import BlogPost, Subscriber, Comment, Admin
+from datetime import datetime
+from .models import BlogPost, Subscriber, Comment, Admin, Newsletter
 from .schemas import BlogPostCreate, BlogPost as BlogPostSchema
 from .schemas import SubscriberCreate, Subscriber as SubscriberSchema
 from .schemas import CommentCreate, Comment as CommentSchema
-from .schemas import AdminLogin, TokenResponse
+from .schemas import AdminLogin, TokenResponse, NewsletterCreate, Newsletter as NewsletterSchema
 from .auth import create_access_token, admin_required
 import os
 
@@ -55,6 +60,56 @@ def create_post():
     return jsonify(BlogPostSchema.model_validate(new_post).model_dump())
 
 # Rutas para mailing
+
+# Newsletter routes
+@api.route('/newsletters', methods=['GET'])
+@admin_required
+def get_newsletters():
+    newsletters = Newsletter.query.all()
+    return jsonify([NewsletterSchema.model_validate(n).model_dump() for n in newsletters])
+
+@api.route('/newsletters', methods=['POST'])
+@admin_required
+def create_newsletter():
+    newsletter_data = NewsletterCreate.model_validate(request.json)
+    new_newsletter = Newsletter(
+        subject=newsletter_data.subject,
+        content=newsletter_data.content,
+        scheduled_for=newsletter_data.scheduled_for,
+        status='scheduled'
+    )
+    db.session.add(new_newsletter)
+    db.session.commit()
+    return jsonify(NewsletterSchema.model_validate(new_newsletter).model_dump())
+
+@api.route('/newsletters/<int:newsletter_id>', methods=['DELETE'])
+@admin_required
+def delete_newsletter(newsletter_id):
+    newsletter = Newsletter.query.get_or_404(newsletter_id)
+    db.session.delete(newsletter)
+    db.session.commit()
+    return '', 204
+
+@api.route('/newsletters/<int:newsletter_id>/send', methods=['POST'])
+@admin_required
+def send_newsletter_now(newsletter_id):
+    newsletter = Newsletter.query.get_or_404(newsletter_id)
+    subscribers = Subscriber.query.all()
+    
+    for subscriber in subscribers:
+        msg = Message(
+            newsletter.subject,
+            sender='your_email@example.com',
+            recipients=[subscriber.email]
+        )
+        msg.html = newsletter.content
+        mail.send(msg)
+    
+    newsletter.status = 'sent'
+    newsletter.sent_at = datetime.utcnow()
+    db.session.commit()
+    
+    return jsonify({"message": "Newsletter sent successfully"})
 @api.route('/mailing/subscribers', methods=['GET'])
 def get_subscribers():
     subscribers = Subscriber.query.all()
@@ -68,7 +123,37 @@ def add_subscriber():
     db.session.commit()
     return jsonify(SubscriberSchema.model_validate(new_subscriber).model_dump())
 
-# Rutas para comentarios
+# Configuración de correo
+mail = Mail()
+
+def send_scheduled_newsletters():
+    current_time = datetime.utcnow()
+    scheduled_newsletters = Newsletter.query.filter_by(status='scheduled').all()
+    
+    for newsletter in scheduled_newsletters:
+        if newsletter.scheduled_for <= current_time:
+            subscribers = Subscriber.query.all()
+            for subscriber in subscribers:
+                msg = Message(
+                    newsletter.subject,
+                    sender='your_email@example.com',
+                    recipients=[subscriber.email]
+                )
+                msg.html = newsletter.content
+                mail.send(msg)
+            
+            newsletter.status = 'sent'
+            newsletter.sent_at = current_time
+            db.session.commit()
+
+def run_scheduler():
+    schedule.every(1).minutes.do(send_scheduled_newsletters)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+threading.Thread(target=run_scheduler).start()
+
 @api.route('/blog/posts/<int:post_id>/comments', methods=['POST'])
 def add_comment(post_id):
     comment_data = CommentCreate.model_validate(request.json)

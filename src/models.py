@@ -1,5 +1,6 @@
 from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,3 +40,15 @@ class Comment(db.Model):
 
     def __repr__(self):
         return f'<Comment {self.content[:20]}>'  # Muestra los primeros 20 caracteres del comentario
+
+class Newsletter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    scheduled_for = db.Column(db.DateTime, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='scheduled')  # scheduled, sent, failed
+
+    def __repr__(self):
+        return f'<Newsletter {self.subject}>'
