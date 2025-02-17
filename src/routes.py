@@ -25,6 +25,28 @@ def health_check():
         "message": "API is running"
     }), 200
 
+# Nueva ruta para el formulario de contacto
+@api.route('/contact', methods=['POST'])
+def handle_contact():
+    data = request.json
+    try:
+        resend.Emails.send({
+            "from": "Mario Carballo <developer@mariocarballo.es>",
+            "to": "mariofernandezcarballo@gmail.com",
+            "subject": f"Nuevo mensaje de contacto de {data.get('name')}",
+            "html": f"""
+                <h2>Nuevo mensaje de contacto</h2>
+                <p><strong>Nombre:</strong> {data.get('name')}</p>
+                <p><strong>Email:</strong> {data.get('email')}</p>
+                <p><strong>Asunto:</strong> {data.get('subject')}</p>
+                <p><strong>Mensaje:</strong></p>
+                <p>{data.get('message')}</p>
+            """
+        })
+        return jsonify({"message": "Mensaje enviado correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # Rutas para el blog
 @api.route('/blog/posts', methods=['GET'])
 def get_posts():
