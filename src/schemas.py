@@ -58,8 +58,8 @@ class Subscriber(SubscriberBase):
 class BlogPostBase(BaseModel):
     title: str
     content: str
-    tags: Optional[str] = None
-    image_url: Optional[str] = None
+    tags: list[str]
+    image_url: str
 
 class BlogPostCreate(BlogPostBase):
     pass
@@ -71,3 +71,19 @@ class BlogPost(BlogPostBase):
 
     class Config:
         from_attributes = True
+    
+    # Custom validator to convert tags from string to list
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        # If obj is a database model instance
+        if hasattr(obj, '__table__'):
+            # Create a dictionary from the model
+            data = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+            # Convert tags from string to list if it's a string
+            if isinstance(data.get('tags'), str):
+                data['tags'] = data['tags'].split(',') if data['tags'] else []
+            # Add relationships
+            if hasattr(obj, 'comments'):
+                data['comments'] = obj.comments
+            return super().model_validate(data, *args, **kwargs)
+        return super().model_validate(obj, *args, **kwargs)
