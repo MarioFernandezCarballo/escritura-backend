@@ -9,10 +9,10 @@ def init_admin(app):
     with app.app_context():
         from .models import Admin
         # Check if admin already exists
-        admin = Admin.query.filter_by(username="admin").first()
+        admin = Admin.query.filter_by(username="mariocarballo").first()
         if not admin:
-            admin = Admin(username="admin")
-            admin.set_password("admin123")  # Default password, change in production
+            admin = Admin(username="mariocarballo")
+            admin.set_password("@jHt1vl09!")  # Default password, change in production
             db.session.add(admin)
             db.session.commit()
             print("Admin user created successfully")
