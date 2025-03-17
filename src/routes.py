@@ -72,6 +72,10 @@ def add_subscriber():
 def delete_subscriber(sub_id):
     return Subscriber.delete(sub_id)
 
+@api.route('/subscriber/email/<string:sub_email>', methods=['DELETE'])
+def delete_subscriber_by_email(sub_email):
+    return Subscriber.deleteByEmail(sub_email)
+
 ### CI / CD - System ###
 ########################
 @api.route('/health', methods=['GET'])

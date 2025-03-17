@@ -70,11 +70,13 @@ class Post:
         return jsonify(CommentSchema.model_validate(new_comment).model_dump())
 
 class Subscriber:
-    def add(request):
+    @classmethod
+    def add(cls, request):
         subscriber_data = SubscriberCreate.model_validate(request.json)
         new_subscriber = SubscriberModel(email=subscriber_data.email)
         db.session.add(new_subscriber)
         db.session.commit()
+        cls.sendWelcome(new_subscriber)
         return jsonify(SubscriberSchema.model_validate(new_subscriber).model_dump())
     
     def delete(id):
@@ -82,10 +84,38 @@ class Subscriber:
         db.session.delete(subscriber)
         db.session.commit()
         return '', 204
-
+    
+    def deleteByEmail(email):
+        subscriber = SubscriberModel.query.filter_by(email=email).first_or_404()
+        db.session.delete(subscriber)
+        db.session.commit()
+        return '', 204
+    
     def get():
         subscribers = SubscriberModel.query.all()
         return jsonify([SubscriberSchema.model_validate(sub).model_dump() for sub in subscribers])
+    
+    def sendWelcome(subscriber):
+        content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; padding: 20px;">
+                <p>¡Bienvenido/a a nuestra comunidad!</p>
+                <p>Estoy encantado de que te hayas unido. A partir de ahora, recibirás novedades, relatos exclusivos y contenido especial directamente en tu bandeja de entrada.</p>
+                <p>Si en algún momento deseas dejar de recibir nuestros correos, puedes darte de baja entrando en el siguiente enlace:</p>
+                <p><a style="cursor: pointer;" href="https://mariocarballo.es/unsubscribe">https://mariocarballo.es/unsubscribe</a></p>
+                <p>¡Gracias por unirte y espero que disfrutes de mi contenido!</p>
+                <p>Un cordial saludo,</p>
+                <p>Mario Carballo</p>
+                <p style="font-size: 12px; color: #888888;">*Nota: Este correo electrónico ha sido enviado a {subscriber.email}. Si no te has suscrito a nuestra lista o crees que has recibido este mensaje por error, por favor, ignóralo.*</p>
+            </body>
+            </html>
+        """
+        resend.Emails.send({
+                "from": "Mario Carballo <developer@mariocarballo.es>",
+                "to": subscriber.email,
+                "subject": "¡Gracias por unirte a la comunidad!",
+                "html": content
+            })
 
 
 class Newsletter:
