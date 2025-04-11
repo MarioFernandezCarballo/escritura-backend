@@ -145,19 +145,30 @@ class Newsletter:
         newsletter = NewsletterModel.query.get_or_404(id)
         subscribers = SubscriberModel.query.all()
         
-        for subscriber in subscribers:
-            resend.Emails.send({
+        try:
+            # Preparar el lote de emails
+            batch_emails = [{
                 "from": "Mario Carballo <developer@mariocarballo.es>",
-                "to": subscriber.email,
+                "to": [subscriber.email],
                 "subject": newsletter.subject,
                 "html": newsletter.content
+            } for subscriber in subscribers]
+            
+            # Enviar todos los emails en una sola llamada API
+            resend.Batch.send(batch_emails)
+            
+            newsletter.status = 'sent'
+            newsletter.sent_at = datetime.utcnow()
+            db.session.commit()
+            
+            return jsonify({
+                "message": "Newsletter sent successfully",
+                "recipients": len(subscribers)
             })
-        
-        newsletter.status = 'sent'
-        newsletter.sent_at = datetime.utcnow()
-        db.session.commit()
-        
-        return jsonify({"message": "Newsletter sent successfully"})
+        except Exception as e:
+            return jsonify({
+                "error": f"Failed to send newsletter: {str(e)}"
+            }), 500
 
 class Auth:
     SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-here')  # In production, use environment variable
