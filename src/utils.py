@@ -69,6 +69,12 @@ class Post:
         db.session.commit()
         return jsonify(BlogPostSchema.model_validate(post).model_dump())
     
+    def delete(id):
+        post = BlogPostModel.query.get_or_404(id)
+        db.session.delete(post)
+        db.session.commit()
+        return '', 204
+    
     def addComment(postId, request):
         comment_data = CommentCreate.model_validate(request.json)
         post = BlogPostModel.query.get_or_404(postId)

@@ -30,6 +30,11 @@ def create_post():
 def edit_post(post_id):
     return Post.edit(post_id, request)
 
+@api.route('/blog/posts/<int:post_id>', methods=['DELETE'])
+@Auth.adminRequired
+def delete_post(post_id):
+    return Post.delete(post_id)
+
 @api.route('/blog/posts/<int:post_id>/comments', methods=['POST'])
 def add_comment(post_id):
     return Post.addComment(post_id, request)
@@ -39,6 +44,11 @@ def add_comment(post_id):
 @api.route('/auth/login', methods=['POST'])
 def login():
     return Auth.login(request)
+
+@api.route('/auth/ping', methods=['GET'])
+@Auth.adminRequired
+def auth_ping():
+    return jsonify({"status": "authenticated"}), 200
 
 ### Newsletter ###
 ##################
