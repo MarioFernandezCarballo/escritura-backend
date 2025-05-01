@@ -25,6 +25,11 @@ def get_post(post_id):
 def create_post():
     return Post.post(request)
 
+@api.route('/blog/posts/<int:post_id>', methods=['PUT'])
+@Auth.adminRequired
+def edit_post(post_id):
+    return Post.edit(post_id, request)
+
 @api.route('/blog/posts/<int:post_id>/comments', methods=['POST'])
 def add_comment(post_id):
     return Post.addComment(post_id, request)

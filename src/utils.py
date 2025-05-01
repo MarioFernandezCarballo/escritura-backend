@@ -57,6 +57,18 @@ class Post:
         # The conversion is now handled by the Pydantic model
         return jsonify(BlogPostSchema.model_validate(post).model_dump())
     
+    def edit(id, request):
+        post_data = BlogPostCreate.model_validate(request.json)
+        post = BlogPostModel.query.get_or_404(id)
+        
+        post.title = post_data.title
+        post.content = post_data.content
+        post.tags = ','.join(post_data.tags) if post_data.tags else ""
+        post.image_url = post_data.image_url
+        
+        db.session.commit()
+        return jsonify(BlogPostSchema.model_validate(post).model_dump())
+    
     def addComment(postId, request):
         comment_data = CommentCreate.model_validate(request.json)
         post = BlogPostModel.query.get_or_404(postId)
