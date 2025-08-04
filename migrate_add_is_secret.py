@@ -9,9 +9,9 @@ import os
 def migrate_database():
     # Buscar el archivo de base de datos
     db_paths = [
-        'instance/database.db',
-        'database.db',
-        '../instance/database.db'
+        'instance/app.db',
+        'app.db',
+        '../instance/app.db'
     ]
     
     db_path = None
