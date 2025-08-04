@@ -1,5 +1,6 @@
 import resend
 import os
+import secrets
 from flask import jsonify, request
 from . import db
 from .models import BlogPost as BlogPostModel, Subscriber as SubscriberModel, Comment, Admin as AdminModel, Newsletter as NewsletterModel
@@ -35,15 +36,32 @@ class Contact():
             return jsonify({"error": str(e)}), 500
 
 class Post:
+    @staticmethod
+    def generateSecretToken():
+        """Genera un token único para posts secretos"""
+        while True:
+            token = secrets.token_urlsafe(16)  # Genera un token de 16 bytes (22 caracteres)
+            # Verificar que el token no existe ya
+            existing = BlogPostModel.query.filter_by(secret_token=token).first()
+            if not existing:
+                return token
+
     def post(request):
         post_data = BlogPostCreate.model_validate(request.json)
         tags_string = ','.join(post_data.tags) if post_data.tags else ""
+        
+        # Generar token si es post secreto
+        secret_token = None
+        if post_data.is_secret:
+            secret_token = Post.generateSecretToken()
+        
         new_post = BlogPostModel(
             title=post_data.title,
             content=post_data.content,
             tags=tags_string,
             image_url=post_data.image_url,
-            is_secret=post_data.is_secret
+            is_secret=post_data.is_secret,
+            secret_token=secret_token
         )
         db.session.add(new_post)
         db.session.commit()
@@ -64,9 +82,21 @@ class Post:
         # Los posts secretos son accesibles por link directo, no filtrar aquí
         return jsonify(BlogPostSchema.model_validate(post).model_dump())
     
+    def getByToken(token):
+        # Buscar post por token secreto
+        post = BlogPostModel.query.filter_by(secret_token=token, is_secret=True).first_or_404()
+        return jsonify(BlogPostSchema.model_validate(post).model_dump())
+    
     def edit(id, request):
         post_data = BlogPostCreate.model_validate(request.json)
         post = BlogPostModel.query.get_or_404(id)
+        
+        # Si cambia de público a secreto, generar token
+        if post_data.is_secret and not post.is_secret:
+            post.secret_token = Post.generateSecretToken()
+        # Si cambia de secreto a público, eliminar token
+        elif not post_data.is_secret and post.is_secret:
+            post.secret_token = None
         
         post.title = post_data.title
         post.content = post_data.content

@@ -68,6 +68,7 @@ class BlogPostCreate(BlogPostBase):
 class BlogPost(BlogPostBase):
     id: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    secret_token: Optional[str] = None
     comments: List[Comment] = []
 
     class Config:

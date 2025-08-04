@@ -25,6 +25,10 @@ def get_all_posts_admin():
 def get_post(post_id):
     return Post.get(post_id)
 
+@api.route('/secret/<string:token>', methods=['GET'])
+def get_secret_post(token):
+    return Post.getByToken(token)
+
 @api.route('/blog/posts', methods=['POST'])
 @Auth.adminRequired
 def create_post():

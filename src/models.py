@@ -21,6 +21,7 @@ class BlogPost(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())  # Fecha de creación
     image_url = db.Column(db.String(300), nullable=True)  # URL de la imagen asociada
     is_secret = db.Column(db.Boolean, default=False, nullable=False)  # Posts secretos solo accesibles por link directo
+    secret_token = db.Column(db.String(32), nullable=True, unique=True)  # Token único para posts secretos
     comments = db.relationship('Comment', backref='post', lazy=True)
 
     def __repr__(self):

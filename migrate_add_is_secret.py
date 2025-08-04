@@ -33,24 +33,39 @@ def migrate_database():
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        # Verificar si la columna ya existe
+        # Verificar si las columnas ya existen
         cursor.execute("PRAGMA table_info(blog_post)")
         columns = [column[1] for column in cursor.fetchall()]
         
-        if 'is_secret' in columns:
-            print("La columna 'is_secret' ya existe en la tabla blog_post")
+        changes_made = False
+        
+        if 'is_secret' not in columns:
+            # Agregar la columna is_secret con valor por defecto False
+            cursor.execute("ALTER TABLE blog_post ADD COLUMN is_secret BOOLEAN DEFAULT 0 NOT NULL")
+            print("Columna 'is_secret' agregada exitosamente")
+            changes_made = True
+        else:
+            print("La columna 'is_secret' ya existe")
+        
+        if 'secret_token' not in columns:
+            # Agregar la columna secret_token
+            cursor.execute("ALTER TABLE blog_post ADD COLUMN secret_token VARCHAR(32) UNIQUE")
+            print("Columna 'secret_token' agregada exitosamente")
+            changes_made = True
+        else:
+            print("La columna 'secret_token' ya existe")
+        
+        if not changes_made:
+            print("Todas las columnas ya existen en la tabla blog_post")
             conn.close()
             return True
-        
-        # Agregar la columna is_secret con valor por defecto False
-        cursor.execute("ALTER TABLE blog_post ADD COLUMN is_secret BOOLEAN DEFAULT 0 NOT NULL")
         
         # Verificar cuántos posts existen
         cursor.execute("SELECT COUNT(*) FROM blog_post")
         post_count = cursor.fetchone()[0]
         
-        print(f"Columna 'is_secret' agregada exitosamente")
-        print(f"Se actualizaron {post_count} posts existentes con is_secret = False")
+        print(f"Se actualizaron {post_count} posts existentes")
+        print("Todos los posts existentes mantienen is_secret = False y secret_token = NULL")
         
         # Confirmar los cambios
         conn.commit()
