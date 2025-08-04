@@ -42,19 +42,26 @@ class Post:
             title=post_data.title,
             content=post_data.content,
             tags=tags_string,
-            image_url=post_data.image_url
+            image_url=post_data.image_url,
+            is_secret=post_data.is_secret
         )
         db.session.add(new_post)
         db.session.commit()
         return jsonify(BlogPostSchema.model_validate(new_post).model_dump())
     
     def getAll():
+        # Solo mostrar posts no secretos en la vista pública
+        posts = BlogPostModel.query.filter_by(is_secret=False).all()
+        return jsonify([BlogPostSchema.model_validate(post).model_dump() for post in posts])
+
+    def getAllAdmin():
+        # Mostrar TODOS los posts para la vista de administración
         posts = BlogPostModel.query.all()
         return jsonify([BlogPostSchema.model_validate(post).model_dump() for post in posts])
 
     def get(id):
         post = BlogPostModel.query.get_or_404(id)
-        # The conversion is now handled by the Pydantic model
+        # Los posts secretos son accesibles por link directo, no filtrar aquí
         return jsonify(BlogPostSchema.model_validate(post).model_dump())
     
     def edit(id, request):
@@ -65,6 +72,7 @@ class Post:
         post.content = post_data.content
         post.tags = ','.join(post_data.tags) if post_data.tags else ""
         post.image_url = post_data.image_url
+        post.is_secret = post_data.is_secret
         
         db.session.commit()
         return jsonify(BlogPostSchema.model_validate(post).model_dump())

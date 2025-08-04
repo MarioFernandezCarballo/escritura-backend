@@ -16,6 +16,11 @@ def handle_contact():
 def get_posts():
     return Post.getAll()
 
+@api.route('/blog/posts/admin', methods=['GET'])
+@Auth.adminRequired
+def get_all_posts_admin():
+    return Post.getAllAdmin()
+
 @api.route('/blog/posts/<int:post_id>', methods=['GET'])
 def get_post(post_id):
     return Post.get(post_id)

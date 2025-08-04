@@ -60,6 +60,7 @@ class BlogPostBase(BaseModel):
     content: str
     tags: list[str]
     image_url: str
+    is_secret: bool = False
 
 class BlogPostCreate(BlogPostBase):
     pass

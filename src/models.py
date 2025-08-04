@@ -20,6 +20,7 @@ class BlogPost(db.Model):
     tags = db.Column(db.String(200), nullable=True)  # Tags separados por comas
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())  # Fecha de creación
     image_url = db.Column(db.String(300), nullable=True)  # URL de la imagen asociada
+    is_secret = db.Column(db.Boolean, default=False, nullable=False)  # Posts secretos solo accesibles por link directo
     comments = db.relationship('Comment', backref='post', lazy=True)
 
     def __repr__(self):
