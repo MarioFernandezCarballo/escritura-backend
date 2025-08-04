@@ -48,9 +48,18 @@ def migrate_database():
             print("La columna 'is_secret' ya existe")
         
         if 'secret_token' not in columns:
-            # Agregar la columna secret_token
-            cursor.execute("ALTER TABLE blog_post ADD COLUMN secret_token VARCHAR(32) UNIQUE")
+            # Agregar la columna secret_token (sin UNIQUE constraint inicialmente)
+            cursor.execute("ALTER TABLE blog_post ADD COLUMN secret_token VARCHAR(32)")
             print("Columna 'secret_token' agregada exitosamente")
+            
+            # Crear un índice único por separado (más compatible con SQLite)
+            try:
+                cursor.execute("CREATE UNIQUE INDEX idx_blog_post_secret_token ON blog_post(secret_token) WHERE secret_token IS NOT NULL")
+                print("Índice único para secret_token creado exitosamente")
+            except Exception as e:
+                print(f"Advertencia: No se pudo crear el índice único: {e}")
+                print("Esto no afecta la funcionalidad básica")
+            
             changes_made = True
         else:
             print("La columna 'secret_token' ya existe")
