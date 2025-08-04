@@ -79,7 +79,9 @@ class Post:
 
     def get(id):
         post = BlogPostModel.query.get_or_404(id)
-        # Los posts secretos son accesibles por link directo, no filtrar aquí
+        # Si el post es secreto, no permitir acceso por URL pública
+        if post.is_secret:
+            return jsonify({"error": "Post not found"}), 404
         return jsonify(BlogPostSchema.model_validate(post).model_dump())
     
     def getByToken(token):

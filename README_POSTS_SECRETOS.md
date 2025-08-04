@@ -76,8 +76,8 @@ Este script:
 ### Posts Secretos
 - **NO** aparecen en `/blog` (lista pública)
 - **SÍ** aparecen en `/manage-posts` (administración) con indicador visual
-- **SÍ** son accesibles por link directo `/blog/[id]` (mantiene compatibilidad)
-- **NUEVA URL SECRETA**: `/secret/[token]` con token único generado automáticamente
+- **NO** son accesibles por link directo `/blog/[id]` (devuelve 404)
+- **SOLO ACCESIBLES** por `/secret/[token]` con token único generado automáticamente
 
 ### URLs de Acceso
 
